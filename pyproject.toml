@@ -1,0 +1,10 @@
+[project]
+name = "matcher"
+version = "0.1.0"
+description = "Utilizes LLMs to intelligently map flat files"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "dspy>=2.6.18",
+    "google-cloud-storage>=3.1.0",
+]
