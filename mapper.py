@@ -7,7 +7,7 @@ class Map(dspy.Signature):
     source_config: dict = dspy.InputField(desc="The source mapping to complete")
     targets: List[str] = dspy.InputField(desc="The targets to match")
 
-    mapped_source_config: dict = dspy.OutputField(desc="The completed source mapping")
+    mapped_source_config: dict = dspy.OutputField(desc="Inject matches into all source mapping objects. Preserve every mapping object regardless of target value")
 
 
 # Define a structured signature for field matching
