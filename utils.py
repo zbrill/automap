@@ -73,3 +73,15 @@ def get_headers_from_gcs_csv(bucket_name, blob_name):
     except Exception as e:
         print(f"Error reading CSV file from GCS: {e}")
         return None
+
+
+def update_config_with_matches(stripped_config, batch_results, threshold=0.5):
+    matches = {}
+    for result in batch_results:
+        matches[result.match] = result
+    for mapping in stripped_config["mappings"]:
+        if mapping["target"] in matches and mapping["type"] == "ONE_TO_ONE":
+            t = mapping["target"]
+            if matches[t].confidence >= threshold:
+                mapping["selector"] = matches[t].source_field
+    return stripped_config

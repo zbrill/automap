@@ -1,5 +1,7 @@
 from mapper import AutoMapper
-from utils import parse_csv_headers_local, parse_target_format
+from utils import (
+    parse_target_format,
+)
 import json
 
 
@@ -37,12 +39,11 @@ def main():
     # matcher.optimize_with_examples(examples)
 
     # test_sources = ["addr1", "second_addr", "birthday", "contact_phone", "fname", "nucc_code"]
-    test_sources = parse_csv_headers_local(
-        "defactoorderly_sample_first_507_records.csv"
-    )
-    batch_results = mapper.batch_match_fields(test_sources, target_fields)
-    updated_config = mapper.update_config_with_matches(stripped_config, batch_results)
-    print(updated_config)
+
+    with open("sample_source.json") as source_config:
+        data = json.load(source_config)
+    mapping = mapper.map(data, target_fields)
+    print(mapping)
 
 
 if __name__ == "__main__":

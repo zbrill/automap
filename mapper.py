@@ -3,6 +3,13 @@ from dspy.evaluate.metrics import answer_exact_match
 from typing import List
 
 
+class Map(dspy.Signature):
+    source_config: dict = dspy.InputField(desc="The source mapping to complete")
+    targets: List[str] = dspy.InputField(desc="The targets to match")
+
+    mapped_source_config: dict = dspy.OutputField(desc="The completed source mapping")
+
+
 # Define a structured signature for field matching
 class FieldMatch(dspy.Signature):
     """Match a source field to its semantic equivalent in target fields."""
@@ -35,18 +42,14 @@ class BatchFieldMatches(dspy.Signature):
     )
 
 
-class ConfigUpdate(dspy.Signature):
-    """Updates and prettifies the target configuration with matched fields."""
+# Base mapping module
+class Mapping(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.mapper = dspy.ChainOfThought(Map)
 
-    target_config: dict = dspy.InputField(
-        desc="The unmapped target configuration to update with matches"
-    )
-    matches: List[FieldMatch] = dspy.InputField(
-        desc="The matches to insert into the target config. Each match's source should replace the empty selector"
-    )
-    updated_config: dict = dspy.OutputField(
-        desc="The updated target configuration with selectors present"
-    )
+    def map(self, source_config, targets):
+        return self.mapper(source_config=source_config, targets=targets)
 
 
 # Define a module that learns to match fields
@@ -71,15 +74,6 @@ class BatchFieldMatchPredictor(dspy.Module):
         )
 
 
-class ConfigUpdater(dspy.Module):
-    def __init__(self):
-        super().__init__()
-        self.updater = dspy.ChainOfThought(ConfigUpdate)
-
-    def update(self, target_config, matches):
-        return self.updater(target_config=target_config, matches=matches)
-
-
 # Main mapper class that can be optimized
 class AutoMapper:
     def __init__(self, model_name="openai/gpt-4o-mini"):
@@ -94,7 +88,7 @@ class AutoMapper:
 
         # Create the predictors
         self.batch_matcher = BatchFieldMatchPredictor()
-        self.updater = ConfigUpdater()
+        self.mapper = Mapping()
 
         # Set up optimized versions
         self.optimized_batch_matcher = None
@@ -116,9 +110,9 @@ class AutoMapper:
         result = matcher.match(source_fields, target_fields)
         return result.matches
 
-    def update_config_with_matches(self, target_config, matches):
-        result = self.updater.update(target_config, matches)
-        return result.updated_config
+    def map(self, source_config, targets):
+        result = self.mapper.map(source_config, targets)
+        return result.mapped_source_config
 
     def optimize_with_examples(self, example_pairs):
         """
